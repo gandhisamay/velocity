@@ -1,4 +1,7 @@
+mod cli;
 mod velocity;
+use clap::Parser;
+use cli::bookmark::Cli;
 use velocity::database::Database;
 
 fn main() {
@@ -7,8 +10,10 @@ fn main() {
         Ok(db) => db,
         Err(err) => return println!("{}", err),
     };
-
-    db.add_bookmark("github.com".into()).unwrap();
-    db.print_database_content();
+    //
+    // db.add_bookmark("github.com".into()).unwrap();
+    // db.print_database_content();
     //cli interface will make it at the end after integrating all the features.
+    let out = Cli::parse();
+    out.perform_action(&mut db);
 }

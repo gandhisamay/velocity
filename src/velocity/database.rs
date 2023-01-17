@@ -96,17 +96,20 @@ impl Database {
             .unwrap())
     }
 
-    pub fn add_bookmark(&mut self, input: String) -> Result<(), VeloError> {
+    pub fn add_bookmark(&mut self, url: &str) -> Result<(), VeloError> {
         //Now time to add the bookmark to the bookmarks array.
+        // TODO: Change this method used. Don't perform clone make it better.
+        let url_clone = url.clone();
 
         self.content
             .get_mut("bookmarks")
-            .and_then(|x| x.as_array_mut().and_then(|y| Some(y.push(input.into()))));
+            .and_then(|x| x.as_array_mut().and_then(|y| Some(y.push(url.into()))));
 
         let write = serde_json::to_string_pretty(&self.content).unwrap();
 
         self.velocity_json.seek(SeekFrom::Start(0)).unwrap();
         self.velocity_json.write_all(&write.as_bytes()).unwrap();
+        println!("Url bookmarked successfully: {}", url_clone);
         Ok(())
     }
 
