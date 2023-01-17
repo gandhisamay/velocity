@@ -4,7 +4,7 @@ use super::error::VeloError;
 use std::{
     env,
     fs::{File, OpenOptions},
-    io::{Read, Write},
+    io::{Read, Seek, SeekFrom, Write},
     path::PathBuf,
 };
 //TODO: Store urls.
@@ -64,7 +64,15 @@ impl Database {
             Ok(db)
         } else {
             let mut json_content = String::new();
-            file.read_to_string(&mut json_content).unwrap();
+            match file.read_to_string(&mut json_content) {
+                Ok(_) => (),
+                Err(err) => println!(
+                    "Error while reading the contents of the velocity.json file\n{}",
+                    err
+                ),
+            }
+
+            println!("{}", json_content);
 
             let content =
                 Box::new(serde_json::from_str::<serde_json::Value>(&json_content).unwrap());
@@ -90,18 +98,23 @@ impl Database {
 
     pub fn add_bookmark(&mut self, input: String) -> Result<(), VeloError> {
         //Now time to add the bookmark to the bookmarks array.
-        println!("{}", self.content);
+
         self.content
             .get_mut("bookmarks")
-            .unwrap()
-            .as_array_mut()
-            .unwrap()
-            .push(input.into());
+            .and_then(|x| x.as_array_mut().and_then(|y| Some(y.push(input.into()))));
 
-        println!("{}", self.content);
         let write = serde_json::to_string_pretty(&self.content).unwrap();
 
+        self.velocity_json.seek(SeekFrom::Start(0)).unwrap();
         self.velocity_json.write_all(&write.as_bytes()).unwrap();
         Ok(())
+    }
+
+    pub fn print_database_content(&mut self) {
+        //Print the file content
+        let mut file_content = String::new();
+        self.velocity_json
+            .read_to_string(&mut file_content)
+            .unwrap();
     }
 }

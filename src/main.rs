@@ -9,7 +9,6 @@ fn main() {
     };
 
     db.add_bookmark("github.com".into()).unwrap();
-
-    println!("{:?}", db);
+    db.print_database_content();
     //cli interface will make it at the end after integrating all the features.
 }
