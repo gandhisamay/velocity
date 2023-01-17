@@ -2,15 +2,17 @@ use serde_json::json;
 
 use super::error::VeloError;
 use std::{
+    env,
     fs::{File, OpenOptions},
-    io::Write,
+    io::{Read, Write},
     path::PathBuf,
 };
 //TODO: Store urls.
 
 #[derive(Debug)]
 pub struct Database {
-    pub velo: File,
+    pub velocity_json: File,
+    pub content: Box<serde_json::Value>,
 }
 
 impl Database {
@@ -18,39 +20,88 @@ impl Database {
         //Get the username from the environment variables.
         // TODO: If home env not found store it in the current directory.
         // Also store in the env the location of the velo file.
-        // let mut home_path = env::var("HOME").unwrap();
+        let mut home_path = env::var("HOME").unwrap();
         //
         let mut f_path = PathBuf::new();
         //Just for development purposes.
-        let home_path: String = ".".into();
+        home_path.push_str("/projects/velocity");
         f_path.push(home_path);
         f_path.push(".velocity");
         f_path.set_extension("json");
 
         println!("File path is {}", f_path.display());
 
-        //No need to create the new file
-        match OpenOptions::new()
+        //No need to create the new file. This method will always open and write the template to
+        //the file.
+        let file_exists: bool = f_path.exists();
+        println!("velocity.json exists : {}", file_exists);
+
+        let result = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
-            .open(&f_path)
-        {
-            Ok(mut file) => {
-                //Create a empty json inside the file.
-                let empty_json = serde_json::to_string_pretty(&json!({})).unwrap();
-                file.write_all(&empty_json.as_bytes()).unwrap();
-                return Ok(Self { velo: file });
-            }
+            .open(&f_path);
+
+        let mut file = match result {
+            Ok(f) => f,
             Err(_) => {
-                return Err(VeloError::ConnectionError(
-                    "Failed to create or open the velo database!".to_string(),
+                return Err(VeloError::FileIOError(
+                    "Failed to open or create velocity.json file".into(),
                 ))
             }
+        };
+
+        if !file_exists {
+            let mut db = Self {
+                velocity_json: file,
+                content: Box::new(json!(null)),
+            };
+            match db.write_template() {
+                Ok(_) => (),
+                Err(err) => return Err(err),
+            };
+
+            Ok(db)
+        } else {
+            let mut json_content = String::new();
+            file.read_to_string(&mut json_content).unwrap();
+
+            let content =
+                Box::new(serde_json::from_str::<serde_json::Value>(&json_content).unwrap());
+
+            let db = Self {
+                velocity_json: file,
+                content,
+            };
+            Ok(db)
         }
     }
 
-    pub fn add_bookmark(&self, input: String) -> Result<(), VeloError> {
-        unimplemented!()
+    fn write_template(&mut self) -> Result<(), VeloError> {
+        self.content = Box::new(json!({
+            "bookmarks": Vec::<String>::new(),
+        }));
+        let boilerplate_string = serde_json::to_string_pretty(&self.content).unwrap();
+        Ok(self
+            .velocity_json
+            .write_all(&boilerplate_string.as_bytes())
+            .unwrap())
+    }
+
+    pub fn add_bookmark(&mut self, input: String) -> Result<(), VeloError> {
+        //Now time to add the bookmark to the bookmarks array.
+        println!("{}", self.content);
+        self.content
+            .get_mut("bookmarks")
+            .unwrap()
+            .as_array_mut()
+            .unwrap()
+            .push(input.into());
+
+        println!("{}", self.content);
+        let write = serde_json::to_string_pretty(&self.content).unwrap();
+
+        self.velocity_json.write_all(&write.as_bytes()).unwrap();
+        Ok(())
     }
 }
