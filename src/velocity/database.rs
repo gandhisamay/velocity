@@ -1,13 +1,15 @@
 use serde_json::json;
 
+use crate::velocity::bookmark::Bookmark;
+
 use super::error::VeloError;
 use std::{
     env,
     fs::{File, OpenOptions},
-    io::{Read, Seek, SeekFrom, Write},
+    io::{Read, Write},
     path::PathBuf,
 };
-//TODO: Store urls.
+// TODO: Store urls.
 
 #[derive(Debug)]
 pub struct Database {
@@ -29,12 +31,12 @@ impl Database {
         f_path.push(".velocity");
         f_path.set_extension("json");
 
-        println!("File path is {}", f_path.display());
+        // println!("File path is {}", f_path.display());
 
         //No need to create the new file. This method will always open and write the template to
         //the file.
         let file_exists: bool = f_path.exists();
-        println!("velocity.json exists : {}", file_exists);
+        // println!("velocity.json exists : {}", file_exists);
 
         let result = OpenOptions::new()
             .read(true)
@@ -87,7 +89,7 @@ impl Database {
 
     fn write_template(&mut self) -> Result<(), VeloError> {
         self.content = Box::new(json!({
-            "bookmarks": Vec::<String>::new(),
+            "bookmarks": Vec::<Bookmark>::new(),
         }));
         let boilerplate_string = serde_json::to_string_pretty(&self.content).unwrap();
         Ok(self
@@ -96,23 +98,7 @@ impl Database {
             .unwrap())
     }
 
-    pub fn add_bookmark(&mut self, url: &str) -> Result<(), VeloError> {
-        //Now time to add the bookmark to the bookmarks array.
-        // TODO: Change this method used. Don't perform clone make it better.
-        let url_clone = url.clone();
-
-        self.content
-            .get_mut("bookmarks")
-            .and_then(|x| x.as_array_mut().and_then(|y| Some(y.push(url.into()))));
-
-        let write = serde_json::to_string_pretty(&self.content).unwrap();
-
-        self.velocity_json.seek(SeekFrom::Start(0)).unwrap();
-        self.velocity_json.write_all(&write.as_bytes()).unwrap();
-        println!("Url bookmarked successfully: {}", url_clone);
-        Ok(())
-    }
-
+    #[allow(dead_code)]
     pub fn print_database_content(&mut self) {
         //Print the file content
         let mut file_content = String::new();

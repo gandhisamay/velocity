@@ -15,5 +15,9 @@ fn main() {
     // db.print_database_content();
     //cli interface will make it at the end after integrating all the features.
     let out = Cli::parse();
-    out.perform_action(&mut db);
+    out.perform_action(&mut db).unwrap();
+    // db.print_database_content();
 }
+
+// NOTES : for launching urls in brave use this sh -c "/usr/bin/brave-browser -- .. all the urls
+// that  you wnat to open"

@@ -1,5 +1,8 @@
 {
   "bookmarks": [
-    "https://www.github.com/gandhisamay/dotfiles"
+    {
+      "name": "dotfiles",
+      "url": "https://www.github.com/gandhisamay/dotfiles"
+    }
   ]
 }
