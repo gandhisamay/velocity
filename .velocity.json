@@ -1,8 +1,14 @@
 {
   "bookmarks": [
     {
-      "name": "dotfiles",
-      "url": "https://www.github.com/gandhisamay/dotfiles"
+      "map": {
+        "dotfiles": "https://www.github.com/gandhisamay/dotfiles"
+      }
+    },
+    {
+      "map": {
+        "nalanda": "https://nalanda-aws.bits-pilani.ac.in"
+      }
     }
   ]
 }

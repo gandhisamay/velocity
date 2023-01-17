@@ -74,8 +74,6 @@ impl Database {
                 ),
             }
 
-            println!("{}", json_content);
-
             let content =
                 Box::new(serde_json::from_str::<serde_json::Value>(&json_content).unwrap());
 
